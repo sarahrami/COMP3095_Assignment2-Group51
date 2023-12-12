@@ -35,10 +35,13 @@ public class PostServiceImpl implements PostService {
     public void createPost(PostRequest postRequest) {
         Post post = Post.builder()
                 .content(postRequest.getContent())
+                .tag(postRequest.getTag())
+                .image(postRequest.getImage())
+                .user_id(postRequest.getUserId())
                 .build();
-        postRepository.save(post);
+        post = postRepository.save(post);
+        log.info("{0}", post);
     }
-
 
     @Override
     public String updatePost(String postId, PostRequest postRequest) {
@@ -69,18 +72,21 @@ public class PostServiceImpl implements PostService {
 
         for (PostResponse response : responses) {
             List<CommentResponse> comments = webClient.get()
-                    .uri(commentURL + "/" + response.getId())
+                    .uri(commentURL + "/post/" + response.getId())
                     .retrieve()
                     .bodyToFlux(CommentResponse.class)
                     .collectList()
                     .block();
-            UserResponse user = webClient.get()
-                    .uri(userURI + "/" + response.getUserId())
-                    .retrieve()
-                    .bodyToFlux(UserResponse.class)
-                    .blockFirst();
-            response.setUser(user);
             response.setComments(comments);
+
+            if (response.getUserId() != null) {
+                UserResponse user = webClient.get()
+                        .uri(userURI + "/" + response.getUserId())
+                        .retrieve()
+                        .bodyToFlux(UserResponse.class)
+                        .blockFirst();
+                response.setUser(user);
+            }
         }
 
         return responses;
@@ -90,30 +96,32 @@ public class PostServiceImpl implements PostService {
         return PostResponse.builder()
                 .Id(post.getId())
                 .userId(post.getUser_id())
+                .tag(post.getTag())
+                .image(post.getImage())
                 .content(post.getContent()).build();
     }
 
     /*
-    @Override
-    public List<HashMap<String, String>> getPostsForUser(String userId){
-        Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userId));
-
-        List<Post> posts = mongoTemplate.find(query, Post.class);
-        return mapToHashMapList(posts);
-    }
-
-    private List<HashMap<String, String>> mapToHashMapList(List<Post> posts) {
-        return posts.stream()
-                .map(post -> {
-                    HashMap<String, String> postMap = new HashMap<>();
-                    postMap.put("postId", post.getId());
-                    postMap.put("userId", post.getUserId());
-                    postMap.put("content", post.getContent());
-                    return postMap;
-                })
-                .collect(Collectors.toList());
-    }
-    */
+     * @Override
+     * public List<HashMap<String, String>> getPostsForUser(String userId){
+     * Query query = new Query();
+     * query.addCriteria(Criteria.where("userId").is(userId));
+     * 
+     * List<Post> posts = mongoTemplate.find(query, Post.class);
+     * return mapToHashMapList(posts);
+     * }
+     * 
+     * private List<HashMap<String, String>> mapToHashMapList(List<Post> posts) {
+     * return posts.stream()
+     * .map(post -> {
+     * HashMap<String, String> postMap = new HashMap<>();
+     * postMap.put("postId", post.getId());
+     * postMap.put("userId", post.getUserId());
+     * postMap.put("content", post.getContent());
+     * return postMap;
+     * })
+     * .collect(Collectors.toList());
+     * }
+     */
 
 }

@@ -8,7 +8,7 @@ services:
       context: ./api-gateway
       dockerfile: ./Dockerfile
     image: api-gateway
-    container_name: api-gateway-assignment2
+    container_name: api-gateway
     ports:
       - "8000:8000"
     environment:
@@ -25,7 +25,7 @@ services:
       context: ./discovery-service
       dockerfile: Dockerfile
     image: discovery-service
-    container_name: discovery-service-assignment2
+    container_name: discovery-service
     ports:
       - "8761:8761"
     environment:
@@ -145,7 +145,7 @@ services:
     restart: unless-stopped
     ports:
       - "9411:9411"
-    container_name: zipkin-assignment2
+    container_name: zipkin
     networks:
       - spring
 
@@ -165,9 +165,9 @@ services:
       - spring
 
   keycloak:
-    image: mihaibob/keycloak:15.0.1
+    image: jboss/keycloak:latest
     restart: unless-stopped
-    container_name: keycloak-assignment2
+    container_name: keycloak
     ports:
       - "8080:8080"
     environment:
@@ -179,9 +179,9 @@ services:
       - DB_SCHEMA=public
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=password
-      - KEYCLOAK_IMPORT=/opt/mihaibob/keycloak/realms/realm-export.json
+      - KEYCLOAK_IMPORT=/opt/jboss/keycloak/realms/realm-export.json
     volumes:
-      - ./init/keycloak/realms:/opt/mihaibob/keycloak/realms
+      - ./init/keycloak/realms:/opt/jboss/keycloak/realms
     depends_on:
       - keycloak-db
     networks:

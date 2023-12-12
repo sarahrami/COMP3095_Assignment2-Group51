@@ -1,5 +1,6 @@
 package ca.gbc.userservice.controller;
 
+import ca.gbc.userservice.dto.UserRequest;
 import ca.gbc.userservice.dto.UserResponse;
 import ca.gbc.userservice.model.User;
 import ca.gbc.userservice.services.UserServiceImpl;
@@ -30,7 +31,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {  // Changed from Long to String
+    public ResponseEntity<UserResponse> getUserById(@PathVariable("id") Long id) {  // Changed from Long to String
         UserResponse user = userService.findById(id);
         if(user != null) {
             return new ResponseEntity<>(user, HttpStatus.OK);
@@ -40,7 +41,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<User> createUser(@RequestBody UserRequest user) {
         User newUser = userService.save(user);
         return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }

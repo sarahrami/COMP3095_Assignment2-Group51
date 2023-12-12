@@ -18,5 +18,7 @@ public class Post {
     private String id;
     private String content;
     private Long user_id;
+    private String tag;
+    private String image;
 
 }

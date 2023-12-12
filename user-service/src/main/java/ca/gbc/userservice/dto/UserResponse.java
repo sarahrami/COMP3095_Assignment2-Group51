@@ -1,5 +1,7 @@
 package ca.gbc.userservice.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,5 +15,5 @@ public class UserResponse {
     private String Id;
     private String username;
     private String password;
-    private FriendshipResponse friendshipResponse;
+    private List<Friendship> friends;
 }

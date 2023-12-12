@@ -1,4 +1,4 @@
-FROM gradle:8.3-jdk17 AS builder
+FROM gradle:8-jdk17-alpine AS builder
 
 COPY --chown=gradle:gradle . /home/gradle/src
 
@@ -8,7 +8,7 @@ RUN gradle build -x test
 
 # ===============================
 
-FROM openjdk:17
+FROM openjdk:17-alpine
 
 RUN mkdir /app
 

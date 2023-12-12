@@ -15,6 +15,8 @@ public class PostResponse {
     private String Id;
     private String content;
     private Long userId;
+    private String tag;
+    private String image;
     private List<CommentResponse> comments;
     private UserResponse user;
 }

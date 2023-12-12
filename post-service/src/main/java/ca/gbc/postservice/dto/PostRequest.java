@@ -14,4 +14,7 @@ public class PostRequest {
     @Id
     private String Id;
     private String content;
+    private String tag;
+    private String image;
+    private Long userId;
 }

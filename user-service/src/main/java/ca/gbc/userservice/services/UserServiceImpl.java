@@ -1,11 +1,15 @@
 package ca.gbc.userservice.services;
 
+import ca.gbc.userservice.dto.Friendship;
 import ca.gbc.userservice.dto.FriendshipResponse;
+import ca.gbc.userservice.dto.UserRequest;
 import ca.gbc.userservice.dto.UserResponse;
 import ca.gbc.userservice.model.User;
 import ca.gbc.userservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final WebClient webClient;
@@ -32,15 +37,17 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAll();
         List<UserResponse> response = new ArrayList<>();
         for (User user : users) {
-            FriendshipResponse friendshipResponse = webClient.get()
+            List<Friendship> friendshipResponse = webClient.get()
                     .uri(friendshipURI + "/friends/" + user.getId())
                     .retrieve()
-                    .bodyToFlux(FriendshipResponse.class)
-                    .blockFirst();
+                    .bodyToFlux(Friendship.class)
+                    .collectList()
+                    .block();
+            log.info("{0}", friendshipResponse);
             UserResponse userResponse = UserResponse.builder()
                     .Id(user.getId().toString())
                     .username(user.getUsername())
-                    .friendshipResponse(friendshipResponse).build();
+                    .friends(friendshipResponse).build();
             response.add(userResponse);
         }
         return response;
@@ -54,22 +61,24 @@ public class UserServiceImpl implements UserService {
         }
 
         User realUser = user.get();
-        FriendshipResponse friendshipResponse = webClient.get()
-                .uri(friendshipURI + "/friends/" + realUser.getId())
-                .retrieve()
-                .bodyToFlux(FriendshipResponse.class)
-                .blockFirst();
+        List<Friendship> friendshipResponse = webClient.get()
+                    .uri(friendshipURI + "/friends/" + realUser.getId())
+                    .retrieve()
+                    .bodyToFlux(Friendship.class)
+                    .collectList()
+                    .block();
+        log.info("{0}", friendshipResponse);
         UserResponse userResponse = UserResponse.builder()
                 .Id(realUser.getId().toString())
                 .username(realUser.getUsername())
-                .friendshipResponse(friendshipResponse).build();
+                .friends(friendshipResponse).build();
 
         return userResponse;
     }
 
     @Override
-    public User save(User user) {
-        return userRepository.save(user);
+    public User save(UserRequest user) {
+        return userRepository.save(User.builder().username(user.getUsername()).password(user.getPassword()).build());
     }
 
     @Override
