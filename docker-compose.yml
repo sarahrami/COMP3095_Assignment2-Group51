@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  # Api Gateway
+  api-gateway:
+    restart: on-failure
+    build:
+      context: ./api-gateway
+      dockerfile: ./Dockerfile
+    image: api-gateway
+    container_name: api-gateway-assignment2
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+    depends_on:
+      - discovery-service
+      - keycloak
+
+  # Discovery Service
+  discovery-service:
+    build:
+      context: ./discovery-service
+      dockerfile: Dockerfile
+    image: discovery-service
+    container_name: discovery-service-assignment2
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+
+  # Friendship Service
+  friendship-service:
+    build:
+      context: ./friendship-service
+      dockerfile: ./Dockerfile
+    image: friendship-service
+    container_name: friendship-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+    depends_on:
+      - mongodb
+
+  # Post Service
+  post-service:
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+    image: post-service
+    container_name: post-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+    depends_on:
+      - mongodb
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    image: user-service
+    container_name: user-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+    depends_on:
+      - postgresdb
+
+  # Comment Service
+  comment-service:
+    build:
+      context: ./comment-service
+      dockerfile: Dockerfile
+    image: comment-service
+    container_name: comment-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring
+    depends_on:
+      - postgresdb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rootadmin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./data/mongo/social:/data/db
+      - ./init/mongo/docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    restart: unless-stopped
+    command: mongod --auth
+    networks:
+      - spring
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: rootadmin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    networks:
+      - spring
+  
+  postgresdb:
+    image: postgres:latest
+    volumes:
+      - ./data/postgresql/data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: rootadmin
+      POSTGRES_PASSWORD: password
+    networks:
+      - spring
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    container_name: zipkin-assignment2
+    networks:
+      - spring
+
+  keycloak-db:
+    image: postgres:latest
+    restart: unless-stopped
+    container_name: keycloak-db
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=keycloak
+    volumes:
+      - ./data/keycloak_psql:/data/postgres
+    networks:
+      - spring
+
+  keycloak:
+    image: mihaibob/keycloak:15.0.1
+    restart: unless-stopped
+    container_name: keycloak-assignment2
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_VENDOR=postgres
+      - DB_ADDR=keycloak-db
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=password
+      - DB_SCHEMA=public
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=password
+      - KEYCLOAK_IMPORT=/opt/mihaibob/keycloak/realms/realm-export.json
+    volumes:
+      - ./init/keycloak/realms:/opt/mihaibob/keycloak/realms
+    depends_on:
+      - keycloak-db
+    networks:
+      - spring
+
+networks:
+  spring:
+    driver: bridge
